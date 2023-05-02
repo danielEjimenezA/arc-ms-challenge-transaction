@@ -1,4 +1,4 @@
-package com.pichincha.services.configuration.error;
+package com.pichincha.services.error;
 
 public class ApiRequestException extends RuntimeException
 {

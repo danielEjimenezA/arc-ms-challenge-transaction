@@ -1,6 +1,6 @@
 package com.pichincha.services.service.impl;
 
-import com.pichincha.services.configuration.error.ApiRequestException;
+import com.pichincha.services.error.ApiRequestException;
 import com.pichincha.services.domain.Account;
 import com.pichincha.services.repository.AccountRepository;
 import com.pichincha.services.repository.MovementRepository;
