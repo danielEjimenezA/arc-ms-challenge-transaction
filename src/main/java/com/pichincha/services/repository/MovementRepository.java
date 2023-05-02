@@ -13,9 +13,9 @@ public interface MovementRepository extends ReactiveCrudRepository<Movement, Lon
 {
     Flux<Movement> findAllByMovementDate(LocalDate date);
     
-    @Query("SELECT m FROM Movement m WHERE m.account_id = :accountId AND m.movement_date >= :initDate AND m.movement_date <= :finishDate")
+    @Query("SELECT * FROM movement m INNER JOIN account a on m.account_id = a.account_id INNER JOIN client c on a.client_id = c.client_id WHERE c.person_id = :personId AND m.movement_date >= :initDate AND m.movement_date <= :finishDate")
     Flux<Movement> findByPersonIdAndInitialDateAndFinishDate(
-            Long accountId,
+            String personId,
             LocalDate initDate,
             LocalDate finishDate
     );

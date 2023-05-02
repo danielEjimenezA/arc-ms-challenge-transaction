@@ -1,4 +1,4 @@
-package com.pichincha.services.error;
+package com.pichincha.services.configuration.error;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;

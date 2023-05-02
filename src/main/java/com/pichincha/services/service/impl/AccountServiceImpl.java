@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.security.NoSuchAlgorithmException;
@@ -31,6 +32,14 @@ public class AccountServiceImpl implements AccountService
     }
     
     @Override
+    public Flux<AccountDto> getByClientId(Long clientId)
+    {
+        return accountRepository
+                .findByClientId(clientId)
+                .map(AccountMapper.INSTANCE::toAccountDto);
+    }
+    
+    @Override
     public Mono<AccountDto> getByAccountNumber(Long accountNumber)
     {
         return accountRepository
@@ -45,7 +54,9 @@ public class AccountServiceImpl implements AccountService
         Random rand = SecureRandom.getInstanceStrong();
         accountDto.setId(rand.nextLong());
         return accountRepository
-                .save(AccountMapper.INSTANCE.toAccount(accountDto).setAsNew())
+                .save(AccountMapper.INSTANCE
+                              .toAccount(accountDto)
+                              .setAsNew())
                 .map(AccountMapper.INSTANCE::toAccountDto);
     }
     

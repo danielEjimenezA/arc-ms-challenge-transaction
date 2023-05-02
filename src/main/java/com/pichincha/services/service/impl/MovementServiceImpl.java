@@ -1,9 +1,8 @@
 package com.pichincha.services.service.impl;
 
+import com.pichincha.services.configuration.error.ApiRequestException;
 import com.pichincha.services.domain.Account;
-import com.pichincha.services.error.ApiRequestException;
 import com.pichincha.services.repository.AccountRepository;
-import com.pichincha.services.repository.ClientRepository;
 import com.pichincha.services.repository.MovementRepository;
 import com.pichincha.services.service.MovementService;
 import com.pichincha.services.service.dto.MovementDto;
@@ -26,7 +25,6 @@ import java.util.Random;
 @RequiredArgsConstructor
 public class MovementServiceImpl implements MovementService
 {
-    private final ClientRepository clientRepository;
     private final MovementRepository movementRepository;
     private final AccountRepository accountRepository;
     @Value("${transaction.movement.limitAmountDaily}")
@@ -51,7 +49,7 @@ public class MovementServiceImpl implements MovementService
     {
         return movementRepository
                 .findByPersonIdAndInitialDateAndFinishDate(
-                        new Long(personId),
+                        personId,
                         initDate,
                         finishDate
                 )
@@ -94,6 +92,35 @@ public class MovementServiceImpl implements MovementService
                 .map(MovementMapper.INSTANCE::toMovementDto);
     }
     
+    @Override
+    @Transactional
+    public Mono<MovementDto> update(
+            Long movementId,
+            MovementDto movementDto
+    )
+    {
+        return movementRepository
+                .findById(movementId)
+                .map(movement ->
+                     {
+                         movement.setMovementValue(movementDto.getMovementValue());
+                         movement.setMovementDate(movementDto.getMovementDate());
+                         movement.setAccountId(movementDto.getAccountId());
+                         movement.setBalance(movementDto.getBalance());
+                         movement.setMovementType(movementDto.getMovementType());
+                         return movement;
+                     })
+                .flatMap(movementRepository::save)
+                .map(MovementMapper.INSTANCE::toMovementDto);
+    }
+    
+    @Override
+    @Transactional
+    public Mono<Void> delete(Long movementId)
+    {
+        return movementRepository.deleteById(movementId);
+    }
+    
     private void debitMovement(
             MovementDto movementDto,
             Account account
@@ -132,34 +159,5 @@ public class MovementServiceImpl implements MovementService
     {
         account.setInitialAmount(account.getInitialAmount() + movementDto.getMovementValue());
         accountRepository.save(account);
-    }
-    
-    @Override
-    @Transactional
-    public Mono<MovementDto> update(
-            Long movementId,
-            MovementDto movementDto
-    )
-    {
-        return movementRepository
-                .findById(movementId)
-                .map(movement ->
-                     {
-                         movement.setMovementValue(movementDto.getMovementValue());
-                         movement.setMovementDate(movementDto.getMovementDate());
-                         movement.setAccountId(movementDto.getAccountId());
-                         movement.setBalance(movementDto.getBalance());
-                         movement.setMovementType(movementDto.getMovementType());
-                         return movement;
-                     })
-                .flatMap(movementRepository::save)
-                .map(MovementMapper.INSTANCE::toMovementDto);
-    }
-    
-    @Override
-    @Transactional
-    public Mono<Void> delete(Long movementId)
-    {
-        return movementRepository.deleteById(movementId);
     }
 }

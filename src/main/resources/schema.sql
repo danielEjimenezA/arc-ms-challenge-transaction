@@ -19,8 +19,8 @@ CREATE TABLE client
 CREATE TABLE account
 (
     account_id bigint not null constraint account_pk primary key,
-    client_id bigint not null unique,
-    account_number bigint,
+    client_id bigint not null,
+    account_number bigint not null unique,
     account_type varchar,
     initial_amount float8,
     status bool

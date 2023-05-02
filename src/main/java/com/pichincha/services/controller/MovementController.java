@@ -29,7 +29,7 @@ public class MovementController
         return Mono.just(ResponseEntity.ok(movementService.get(movementId)));
     }
     
-    @GetMapping("/report{personId}/{initDate}/{finishDate}")
+    @GetMapping("/report/{personId}/{initDate}/{finishDate}")
     public Mono<ResponseEntity<Flux<MovementDto>>> getReportMovement(
             @PathVariable
             Long personId,

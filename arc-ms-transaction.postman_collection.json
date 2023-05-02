@@ -20,7 +20,7 @@
 							}
 						],
 						"url": {
-							"raw": "http://localhost:8080/api/v1/movimientos/report{{personId}}/{{fechaInicio}}/{{fechaFin}}",
+							"raw": "http://localhost:8080/api/v1/movements/report/{{personId}}/{{fechaInicio}}/{{fechaFin}}",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -29,8 +29,9 @@
 							"path": [
 								"api",
 								"v1",
-								"movimientos",
-								"report{{personId}}",
+								"movements",
+								"report",
+								"{{personId}}",
 								"{{fechaInicio}}",
 								"{{fechaFin}}"
 							]
@@ -45,7 +46,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n  \"accountId\": 6120292728192669707,\r\n  \"movementDate\": \"2023-05-02\",\r\n  \"movementType\": \"Débito\",\r\n  \"movementValue\": 100,\r\n  \"balance\": 3000\r\n}",
+							"raw": "{\r\n  \"accountId\": -6230103310363502184,\r\n  \"movementDate\": \"2023-05-02\",\r\n  \"movementType\": \"Débito\",\r\n  \"movementValue\": 300,\r\n  \"balance\": 3000\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -190,7 +191,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n  \"clientId\": 6343598734276423311,\r\n  \"accountNumber\": 1236752,\r\n  \"accountType\": \"Ahorros\",\r\n  \"initialAmount\": 2000,\r\n  \"status\": true\r\n}",
+							"raw": "{\r\n  \"clientId\": -4099477353866548367,\r\n  \"accountNumber\": 98278372,\r\n  \"accountType\": \"Ahorros\",\r\n  \"initialAmount\": 2000,\r\n  \"status\": true\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -230,6 +231,29 @@
 								"v1",
 								"accounts",
 								"{{accountNumber}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get_account_by_client",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/v1/accounts/client/{{clientId}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"v1",
+								"accounts",
+								"client",
+								"{{clientId}}"
 							]
 						}
 					},

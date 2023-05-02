@@ -1,4 +1,4 @@
-package com.pichincha.services.error;
+package com.pichincha.services.configuration.error;
 
 public class NotFoundException extends RuntimeException
 {

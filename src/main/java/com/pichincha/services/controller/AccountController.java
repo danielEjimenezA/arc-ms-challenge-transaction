@@ -5,6 +5,7 @@ import com.pichincha.services.service.dto.AccountDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import javax.validation.Valid;
@@ -24,6 +25,15 @@ public class AccountController
     )
     {
         return Mono.just(ResponseEntity.ok(accountService.getByAccountNumber(accountNumber)));
+    }
+    
+    @GetMapping("/client/{clientId}")
+    public Mono<ResponseEntity<Flux<AccountDto>>> getByClient(
+            @PathVariable
+            Long clientId
+    )
+    {
+        return Mono.just(ResponseEntity.ok(accountService.getByClientId(clientId)));
     }
     
     @PostMapping
