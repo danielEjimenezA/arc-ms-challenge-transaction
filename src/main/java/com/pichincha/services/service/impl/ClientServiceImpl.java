@@ -1,11 +1,11 @@
 package com.pichincha.services.service.impl;
 
+import com.pichincha.services.error.ApiRequestException;
 import com.pichincha.services.repository.ClientRepository;
 import com.pichincha.services.repository.PersonRepository;
 import com.pichincha.services.service.ClientService;
 import com.pichincha.services.service.dto.ClientDto;
 import com.pichincha.services.service.mapper.ClientMapper;
-import com.pichincha.services.service.mapper.PersonMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -30,21 +30,17 @@ public class ClientServiceImpl implements ClientService
     {
         return Mono
                 .zip(
-                        clientRepository
-                                .findByPersonId(personId)
-                                .map(ClientMapper.INSTANCE::toClientDto),
-                        personRepository
-                                .findById(personId)
-                                .map(PersonMapper.INSTANCE::toClientDto)
+                        clientRepository.findByPersonId(personId),
+                        personRepository.findById(personId)
                 )
                 .map(objects -> ClientDto
                         .builder()
                         .clientId(objects
                                           .getT1()
-                                          .getClientId())
+                                          .getId())
                         .personId(objects
-                                          .getT1()
-                                          .getPersonId())
+                                          .getT2()
+                                          .getId())
                         .name(objects
                                       .getT2()
                                       .getName())
@@ -61,10 +57,10 @@ public class ClientServiceImpl implements ClientService
                                        .getT2()
                                        .getPhone())
                         .password(objects
-                                          .getT2()
+                                          .getT1()
                                           .getPassword())
                         .status(objects
-                                        .getT2()
+                                        .getT1()
                                         .getStatus())
                         .build());
     }
@@ -75,14 +71,49 @@ public class ClientServiceImpl implements ClientService
     {
         Random rand = SecureRandom.getInstanceStrong();
         clientDto.setClientId(rand.nextLong());
-        
-        personRepository.save(ClientMapper.INSTANCE.toPerson(clientDto));
-        
-        return clientRepository
-                .save(ClientMapper.INSTANCE
-                              .toClient(clientDto)
-                              .setAsNew())
-                .map(ClientMapper.INSTANCE::toClientDto);
+        return Mono
+                .zip(
+                        personRepository.save(ClientMapper.INSTANCE
+                                                      .toPerson(clientDto)
+                                                      .setAsNew()),
+                        clientRepository.save(ClientMapper.INSTANCE
+                                                      .toClient(clientDto)
+                                                      .setAsNew())
+                )
+                .doOnError(throwable ->
+                           {
+                               throw new ApiRequestException("Client already exist");
+                           })
+                .map(objects -> ClientDto
+                        .builder()
+                        .clientId(objects
+                                          .getT2()
+                                          .getId())
+                        .personId(objects
+                                          .getT1()
+                                          .getId())
+                        .name(objects
+                                      .getT1()
+                                      .getName())
+                        .gender(objects
+                                        .getT1()
+                                        .getGender())
+                        .age(objects
+                                     .getT1()
+                                     .getAge())
+                        .address(objects
+                                         .getT1()
+                                         .getAddress())
+                        .phone(objects
+                                       .getT1()
+                                       .getPhone())
+                        .password(objects
+                                          .getT2()
+                                          .getPassword())
+                        .status(objects
+                                        .getT2()
+                                        .getStatus())
+                        .build());
     }
     
     @Override
@@ -92,19 +123,45 @@ public class ClientServiceImpl implements ClientService
             ClientDto clientDto
     )
     {
-        return clientRepository
-                .findById(clientId)
-                .map(client ->
-                     {
-                         personRepository.save(ClientMapper.INSTANCE.toPerson(clientDto));
-                         
-                         client.setPassword(clientDto.getPassword());
-                         client.setPersonId(clientDto.getPersonId());
-                         client.setStatus(clientDto.getStatus());
-                         return client;
-                     })
-                .flatMap(clientRepository::save)
-                .map(ClientMapper.INSTANCE::toClientDto);
+        return Mono
+                .zip(
+                        personRepository.save(ClientMapper.INSTANCE.toPerson(clientDto)),
+                        clientRepository.save(ClientMapper.INSTANCE.toClient(clientDto))
+                )
+                .doOnError(throwable ->
+                           {
+                               throw new ApiRequestException("Error to update client.");
+                           })
+                .map(objects -> ClientDto
+                        .builder()
+                        .clientId(objects
+                                          .getT2()
+                                          .getId())
+                        .personId(objects
+                                          .getT1()
+                                          .getId())
+                        .name(objects
+                                      .getT1()
+                                      .getName())
+                        .gender(objects
+                                        .getT1()
+                                        .getGender())
+                        .age(objects
+                                     .getT1()
+                                     .getAge())
+                        .address(objects
+                                         .getT1()
+                                         .getAddress())
+                        .phone(objects
+                                       .getT1()
+                                       .getPhone())
+                        .password(objects
+                                          .getT2()
+                                          .getPassword())
+                        .status(objects
+                                        .getT2()
+                                        .getStatus())
+                        .build());
     }
     
     @Override
@@ -117,7 +174,11 @@ public class ClientServiceImpl implements ClientService
                      {
                          personRepository.deleteById(client.getPersonId());
                          return client;
-                     });
+                     })
+                .doOnSuccess(client -> log.info(
+                        "Process to delete client {} success",
+                        client.getId()
+                ));
         return clientRepository.deleteById(clientId);
     }
 }

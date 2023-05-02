@@ -42,7 +42,7 @@ public class MovementController
     )
     {
         return Mono.just(ResponseEntity.ok(movementService.findByPersonIdAndInitialDateAndFinishDate(
-                personId,
+                "" + personId,
                 initDate,
                 finishDate
         )));

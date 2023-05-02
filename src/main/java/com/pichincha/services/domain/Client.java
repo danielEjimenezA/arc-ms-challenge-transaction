@@ -9,7 +9,6 @@ import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
 @Table("client")
-@Builder
 @Data
 public class Client implements Persistable<Long>
 {
@@ -21,6 +20,19 @@ public class Client implements Persistable<Long>
     private Boolean status;
     @Column("person_id")
     private String personId;
+    
+    public Client(
+            Long id,
+            String password,
+            Boolean status,
+            String personId
+    )
+    {
+        this.id = id;
+        this.password = password;
+        this.status = status;
+        this.personId = personId;
+    }
     
     @Transient
     private boolean newClient;

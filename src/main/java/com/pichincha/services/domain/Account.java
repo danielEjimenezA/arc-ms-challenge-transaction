@@ -1,6 +1,5 @@
 package com.pichincha.services.domain;
 
-import lombok.Builder;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
@@ -9,7 +8,6 @@ import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
 @Table("account")
-@Builder
 @Data
 public class Account implements Persistable<Long>
 {
@@ -25,6 +23,23 @@ public class Account implements Persistable<Long>
     @Column("initial_amount")
     private Double initialAmount;
     private Boolean status;
+    
+    public Account(
+            Long id,
+            Long clientId,
+            Long accountNumber,
+            String accountType,
+            Double initialAmount,
+            Boolean status
+    )
+    {
+        this.id = id;
+        this.clientId = clientId;
+        this.accountNumber = accountNumber;
+        this.accountType = accountType;
+        this.initialAmount = initialAmount;
+        this.status = status;
+    }
     
     @Transient
     private boolean newAccount;

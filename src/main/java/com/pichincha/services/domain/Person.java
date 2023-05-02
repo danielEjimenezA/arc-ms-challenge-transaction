@@ -1,6 +1,5 @@
 package com.pichincha.services.domain;
 
-import lombok.Builder;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
@@ -9,7 +8,6 @@ import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
 @Table("person")
-@Builder
 @Data
 public class Person implements Persistable<String>
 {
@@ -21,6 +19,23 @@ public class Person implements Persistable<String>
     private Integer age;
     private String address;
     private String phone;
+    
+    public Person(
+            String id,
+            String name,
+            String gender,
+            Integer age,
+            String address,
+            String phone
+    )
+    {
+        this.id = id;
+        this.name = name;
+        this.gender = gender;
+        this.age = age;
+        this.address = address;
+        this.phone = phone;
+    }
     
     @Transient
     private boolean newPerson;

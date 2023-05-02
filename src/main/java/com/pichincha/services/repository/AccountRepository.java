@@ -9,5 +9,6 @@ import reactor.core.publisher.Mono;
 public interface AccountRepository extends ReactiveCrudRepository<Account, Long>
 {
     Mono<Account> findByAccountNumber(Long accountNumber);
+    Mono<Account> findByClientId(Long clientId);
     
 }

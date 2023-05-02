@@ -12,7 +12,7 @@ public interface MovementService
     Mono<MovementDto> get(Long movementId);
     
     Flux<MovementDto> findByPersonIdAndInitialDateAndFinishDate(
-            Long personId,
+            String personId,
             LocalDate initDate,
             LocalDate finishDate
     );

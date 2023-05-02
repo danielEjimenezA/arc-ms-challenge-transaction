@@ -1,7 +1,9 @@
 package com.pichincha.services.service.impl;
 
+import com.pichincha.services.domain.Account;
 import com.pichincha.services.error.ApiRequestException;
 import com.pichincha.services.repository.AccountRepository;
+import com.pichincha.services.repository.ClientRepository;
 import com.pichincha.services.repository.MovementRepository;
 import com.pichincha.services.service.MovementService;
 import com.pichincha.services.service.dto.MovementDto;
@@ -24,6 +26,7 @@ import java.util.Random;
 @RequiredArgsConstructor
 public class MovementServiceImpl implements MovementService
 {
+    private final ClientRepository clientRepository;
     private final MovementRepository movementRepository;
     private final AccountRepository accountRepository;
     @Value("${transaction.movement.limitAmountDaily}")
@@ -41,14 +44,14 @@ public class MovementServiceImpl implements MovementService
     @Override
     @Transactional(readOnly = true)
     public Flux<MovementDto> findByPersonIdAndInitialDateAndFinishDate(
-            Long personId,
+            String personId,
             LocalDate initDate,
             LocalDate finishDate
     )
     {
         return movementRepository
                 .findByPersonIdAndInitialDateAndFinishDate(
-                        personId,
+                        new Long(personId),
                         initDate,
                         finishDate
                 )
@@ -66,53 +69,69 @@ public class MovementServiceImpl implements MovementService
                                  switch (movementDto.getMovementType())
                                  {
                                      case "Depósito":
-                                         account.setInitialAmount(
-                                                 account.getInitialAmount() + movementDto.getMovementValue());
-                                         accountRepository.save(account);
+                                         depositMovement(
+                                                 movementDto,
+                                                 account
+                                         );
                                          break;
                                      case "Débito":
-                                         if (account
-                                                     .getInitialAmount()
-                                                     .compareTo(movementDto.getMovementValue()) > 0)
-                                         {
-                                             limitAmountDaily = 0.0;
-                                             movementRepository
-                                                     .findAllByMovementDate(LocalDate.now())
-                                                     .map(movement -> limitAmountDaily + movement.getMovementValue());
-                                
-                                             if (limitAmountDaily != 1000)
-                                             {
-                                                 account.setInitialAmount(
-                                                         account.getInitialAmount() - movementDto.getMovementValue());
-                                                 accountRepository.save(account);
-                                             }
-                                             else
-                                             {
-                                                 throw new ApiRequestException("Cupo diario excedido");
-                                             }
-                                
-                                         }
-                                         else
-                                         {
-                                             throw new ApiRequestException("Saldo no disponible");
-                                         }
+                                         debitMovement(
+                                                 movementDto,
+                                                 account
+                                         );
                                          break;
                                      default:
                                  }
-                                 Random rand = null;
-                                 try
-                                 {
-                                     rand = SecureRandom.getInstanceStrong();
-                                 } catch (NoSuchAlgorithmException e)
-                                 {
-                                     throw new RuntimeException(e);
-                                 }
-                                 movementDto.setId(rand.nextLong());
+                    
                                  movementDto.setBalance(account.getInitialAmount());
                              });
+        Random rand = SecureRandom.getInstanceStrong();
+        movementDto.setId(rand.nextLong());
         return movementRepository
-                .save(MovementMapper.INSTANCE.toMovement(movementDto))
+                .save(MovementMapper.INSTANCE
+                              .toMovement(movementDto)
+                              .setAsNew())
                 .map(MovementMapper.INSTANCE::toMovementDto);
+    }
+    
+    private void debitMovement(
+            MovementDto movementDto,
+            Account account
+    )
+    {
+        if (account
+                    .getInitialAmount()
+                    .compareTo(movementDto.getMovementValue()) > 0)
+        {
+            limitAmountDaily = 0.0;
+            movementRepository
+                    .findAllByMovementDate(LocalDate.now())
+                    .map(movement -> limitAmountDaily + movement.getMovementValue());
+            
+            if (limitAmountDaily != 1000)
+            {
+                account.setInitialAmount(account.getInitialAmount() - movementDto.getMovementValue());
+                accountRepository.save(account);
+            }
+            else
+            {
+                throw new ApiRequestException("Cupo diario excedido");
+            }
+            
+        }
+        else
+        {
+            throw new ApiRequestException("Saldo no disponible");
+        }
+    }
+    
+    private void depositMovement(
+            MovementDto movementDto,
+            Account account
+    )
+    {
+        account.setInitialAmount(account.getInitialAmount() + movementDto.getMovementValue());
+        accountRepository.save(account);
     }
     
     @Override

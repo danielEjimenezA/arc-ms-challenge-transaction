@@ -45,7 +45,7 @@ public class AccountServiceImpl implements AccountService
         Random rand = SecureRandom.getInstanceStrong();
         accountDto.setId(rand.nextLong());
         return accountRepository
-                .save(AccountMapper.INSTANCE.toAccount(accountDto))
+                .save(AccountMapper.INSTANCE.toAccount(accountDto).setAsNew())
                 .map(AccountMapper.INSTANCE::toAccountDto);
     }
     

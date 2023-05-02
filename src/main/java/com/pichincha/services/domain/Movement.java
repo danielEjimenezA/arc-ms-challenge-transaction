@@ -1,6 +1,5 @@
 package com.pichincha.services.domain;
 
-import lombok.Builder;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
@@ -11,7 +10,6 @@ import org.springframework.data.relational.core.mapping.Table;
 import java.time.LocalDate;
 
 @Table("movement")
-@Builder
 @Data
 public class Movement implements Persistable<Long>
 {
@@ -27,6 +25,23 @@ public class Movement implements Persistable<Long>
     @Column("movement_value")
     private Double movementValue;
     private Double balance;
+    
+    public Movement(
+            Long id,
+            Long accountId,
+            LocalDate movementDate,
+            String movementType,
+            Double movementValue,
+            Double balance
+    )
+    {
+        this.id = id;
+        this.accountId = accountId;
+        this.movementDate = movementDate;
+        this.movementType = movementType;
+        this.movementValue = movementValue;
+        this.balance = balance;
+    }
     
     @Transient
     private boolean newMovement;
