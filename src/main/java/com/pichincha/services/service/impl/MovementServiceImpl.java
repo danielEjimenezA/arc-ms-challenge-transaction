@@ -1,7 +1,8 @@
 package com.pichincha.services.service.impl;
 
-import com.pichincha.services.error.ApiRequestException;
 import com.pichincha.services.domain.Account;
+import com.pichincha.services.error.ApiRequestException;
+import com.pichincha.services.error.NotFoundException;
 import com.pichincha.services.repository.AccountRepository;
 import com.pichincha.services.repository.MovementRepository;
 import com.pichincha.services.service.MovementService;
@@ -36,7 +37,8 @@ public class MovementServiceImpl implements MovementService
     {
         return movementRepository
                 .findById(movementId)
-                .map(MovementMapper.INSTANCE::toMovementDto);
+                .map(MovementMapper.INSTANCE::toMovementDto)
+                .switchIfEmpty(Mono.error(new NotFoundException("Not found Movement by id")));
     }
     
     @Override
@@ -53,7 +55,8 @@ public class MovementServiceImpl implements MovementService
                         initDate,
                         finishDate
                 )
-                .map(MovementMapper.INSTANCE::toMovementDto);
+                .map(MovementMapper.INSTANCE::toMovementDto)
+                .switchIfEmpty(Mono.error(new NotFoundException("Not found Movements by person id in the entered date")));
     }
     
     @Override
@@ -62,29 +65,30 @@ public class MovementServiceImpl implements MovementService
     {
         accountRepository
                 .findById(movementDto.getAccountId())
-                .doOnSuccess(account ->
-                             {
-                                 switch (movementDto.getMovementType())
-                                 {
-                                     case "Depósito":
-                                         depositMovement(
-                                                 movementDto,
-                                                 account
-                                         );
-                                         break;
-                                     case "Débito":
-                                         debitMovement(
-                                                 movementDto,
-                                                 account
-                                         );
-                                         break;
-                                     default:
-                                 }
+                .doOnNext(account ->
+                          {
+                              switch (movementDto.getMovementType())
+                              {
+                                  case "Depósito":
+                                      depositMovement(
+                                              movementDto,
+                                              account
+                                      );
+                                      break;
+                                  case "Débito":
+                                      debitMovement(
+                                              movementDto,
+                                              account
+                                      );
+                                      break;
+                                  default:
+                              }
                     
-                                 movementDto.setBalance(account.getInitialAmount());
-                             });
+                              movementDto.setBalance(account.getInitialAmount());
+                          });
         Random rand = SecureRandom.getInstanceStrong();
         movementDto.setId(rand.nextLong());
+        movementDto.setMovementDate(LocalDate.now());
         return movementRepository
                 .save(MovementMapper.INSTANCE
                               .toMovement(movementDto)

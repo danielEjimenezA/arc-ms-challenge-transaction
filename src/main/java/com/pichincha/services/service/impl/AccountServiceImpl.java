@@ -1,5 +1,6 @@
 package com.pichincha.services.service.impl;
 
+import com.pichincha.services.error.NotFoundException;
 import com.pichincha.services.repository.AccountRepository;
 import com.pichincha.services.service.AccountService;
 import com.pichincha.services.service.dto.AccountDto;
@@ -28,7 +29,8 @@ public class AccountServiceImpl implements AccountService
     {
         return accountRepository
                 .findById(accountId)
-                .map(AccountMapper.INSTANCE::toAccountDto);
+                .map(AccountMapper.INSTANCE::toAccountDto)
+                .switchIfEmpty(Mono.error(new NotFoundException("Account not exist")));
     }
     
     @Override
@@ -36,7 +38,8 @@ public class AccountServiceImpl implements AccountService
     {
         return accountRepository
                 .findByClientId(clientId)
-                .map(AccountMapper.INSTANCE::toAccountDto);
+                .map(AccountMapper.INSTANCE::toAccountDto)
+                .switchIfEmpty(Mono.error(new NotFoundException("Not found account by client id")));
     }
     
     @Override
@@ -44,7 +47,8 @@ public class AccountServiceImpl implements AccountService
     {
         return accountRepository
                 .findByAccountNumber(accountNumber)
-                .map(AccountMapper.INSTANCE::toAccountDto);
+                .map(AccountMapper.INSTANCE::toAccountDto)
+                .switchIfEmpty(Mono.error(new NotFoundException("Not found account by number")));
     }
     
     @Override

@@ -1,6 +1,7 @@
 package com.pichincha.services.service.impl;
 
 import com.pichincha.services.error.ApiRequestException;
+import com.pichincha.services.error.NotFoundException;
 import com.pichincha.services.repository.ClientRepository;
 import com.pichincha.services.repository.PersonRepository;
 import com.pichincha.services.service.ClientService;
@@ -62,7 +63,8 @@ public class ClientServiceImpl implements ClientService
                         .status(objects
                                         .getT1()
                                         .getStatus())
-                        .build());
+                        .build())
+                .switchIfEmpty(Mono.error(new NotFoundException("Client not exist")));
     }
     
     @Override

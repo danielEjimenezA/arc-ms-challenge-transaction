@@ -33,7 +33,7 @@ public class ApiExceptionHandler
     }
     
     @ExceptionHandler(NotFoundException.class)
-    public ResponseEntity<Object> notFoundException(Exception e)
+    public ResponseEntity<Object> notFoundException(NotFoundException e)
     {
         log.error(e.toString());
         return buildResponseEntity(new ApiException(
