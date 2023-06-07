@@ -30,6 +30,7 @@ public class MovementServiceImpl implements MovementService
     private final AccountRepository accountRepository;
     @Value("${transaction.movement.limitAmountDaily}")
     private Double limitAmountDaily;
+    private MovementDto movementDto;
     
     @Override
     @Transactional(readOnly = true)
@@ -63,37 +64,48 @@ public class MovementServiceImpl implements MovementService
     @Transactional
     public Mono<MovementDto> create(MovementDto movementDto) throws NoSuchAlgorithmException
     {
-        accountRepository
+        this.movementDto = MovementDto
+                .builder()
+                .build();
+        return accountRepository
                 .findById(movementDto.getAccountId())
-                .doOnNext(account ->
-                          {
-                              switch (movementDto.getMovementType())
-                              {
-                                  case "Depósito":
-                                      depositMovement(
-                                              movementDto,
-                                              account
-                                      );
-                                      break;
-                                  case "Débito":
-                                      debitMovement(
-                                              movementDto,
-                                              account
-                                      );
-                                      break;
-                                  default:
-                              }
-                    
-                              movementDto.setBalance(account.getInitialAmount());
-                          });
-        Random rand = SecureRandom.getInstanceStrong();
-        movementDto.setId(rand.nextLong());
-        movementDto.setMovementDate(LocalDate.now());
-        return movementRepository
-                .save(MovementMapper.INSTANCE
-                              .toMovement(movementDto)
-                              .setAsNew())
-                .map(MovementMapper.INSTANCE::toMovementDto);
+                .map(account ->
+                     {
+                         switch (movementDto.getMovementType())
+                         {
+                             case "Depósito":
+                                 try
+                                 {
+                                     this.movementDto = depositMovement(
+                                             movementDto,
+                                             account
+                                     );
+                                 } catch (NoSuchAlgorithmException e)
+                                 {
+                                     throw new ApiRequestException(e.getMessage());
+                                 }
+                                 break;
+                             case "Débito":
+                                 try
+                                 {
+                                     this.movementDto = debitMovement(
+                                             movementDto,
+                                             account
+                                     );
+                                 } catch (NoSuchAlgorithmException e)
+                                 {
+                                     throw new ApiRequestException(e.getMessage());
+                                 }
+                                 break;
+                             default:
+                         }
+                         return this.movementDto;
+                     })
+                .flatMap(movementDto1 -> movementRepository
+                        .save(MovementMapper.INSTANCE
+                                      .toMovement(this.movementDto)
+                                      .setAsNew())
+                        .map(MovementMapper.INSTANCE::toMovementDto));
     }
     
     @Override
@@ -125,43 +137,61 @@ public class MovementServiceImpl implements MovementService
         return movementRepository.deleteById(movementId);
     }
     
-    private void debitMovement(
+    private MovementDto debitMovement(
             MovementDto movementDto,
             Account account
-    )
+    ) throws NoSuchAlgorithmException
     {
         if (account
                     .getInitialAmount()
                     .compareTo(movementDto.getMovementValue()) > 0)
         {
-            limitAmountDaily = 0.0;
+            movementDto.setBalance(account.getInitialAmount() - movementDto.getMovementValue());
             movementRepository
-                    .findAllByMovementDate(LocalDate.now())
-                    .map(movement -> limitAmountDaily + movement.getMovementValue());
-            
-            if (limitAmountDaily != 1000)
-            {
-                account.setInitialAmount(account.getInitialAmount() - movementDto.getMovementValue());
-                accountRepository.save(account);
-            }
-            else
-            {
-                throw new ApiRequestException("Cupo diario excedido");
-            }
-            
+                    .findAmountDailyByMovementDateAndMovementType(
+                            LocalDate.now(),
+                            "Débito"
+                    )
+                    .subscribe(amountDaily ->
+                               {
+                                   log.info(
+                                           "AmountDaily query = {}",
+                                           amountDaily
+                                   );
+                                   if (amountDaily < limitAmountDaily)
+                                   {
+                                       account.setInitialAmount(
+                                               account.getInitialAmount() - movementDto.getMovementValue());
+                                       accountRepository.save(account);
+                                   }
+                                   else
+                                   {
+                                       throw new ApiRequestException("Cupo diario excedido");
+                                   }
+                               });
         }
         else
         {
             throw new ApiRequestException("Saldo no disponible");
         }
+        Random rand = SecureRandom.getInstanceStrong();
+        movementDto.setId(rand.nextLong());
+        movementDto.setMovementDate(LocalDate.now());
+        return movementDto;
     }
     
-    private void depositMovement(
+    private MovementDto depositMovement(
             MovementDto movementDto,
             Account account
-    )
+    ) throws NoSuchAlgorithmException
     {
+        movementDto.setBalance(account.getInitialAmount() + movementDto.getMovementValue());
         account.setInitialAmount(account.getInitialAmount() + movementDto.getMovementValue());
         accountRepository.save(account);
+        
+        Random rand = SecureRandom.getInstanceStrong();
+        movementDto.setId(rand.nextLong());
+        movementDto.setMovementDate(LocalDate.now());
+        return movementDto;
     }
 }
