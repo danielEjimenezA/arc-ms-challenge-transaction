@@ -160,8 +160,7 @@ public class MovementServiceImpl implements MovementService
                                    );
                                    if (amountDaily < limitAmountDaily)
                                    {
-                                       account.setInitialAmount(
-                                               account.getInitialAmount() - movementDto.getMovementValue());
+                                       account.setInitialAmount(movementDto.getBalance());
                                        accountRepository.save(account);
                                    }
                                    else
