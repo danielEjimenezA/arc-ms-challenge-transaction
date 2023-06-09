@@ -101,11 +101,15 @@ public class MovementServiceImpl implements MovementService
                          }
                          return this.movementDto;
                      })
-                .flatMap(movementDto1 -> movementRepository
-                        .save(MovementMapper.INSTANCE
-                                      .toMovement(this.movementDto)
-                                      .setAsNew())
-                        .map(MovementMapper.INSTANCE::toMovementDto));
+                .flatMap(movementDto1 ->
+                         {
+                             movementDto1.setMovementDate(LocalDate.now());
+                             return movementRepository
+                                     .save(MovementMapper.INSTANCE
+                                                   .toMovement(this.movementDto)
+                                                   .setAsNew())
+                                     .map(MovementMapper.INSTANCE::toMovementDto);
+                         });
     }
     
     @Override
